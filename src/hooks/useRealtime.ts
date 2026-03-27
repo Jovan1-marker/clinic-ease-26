@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { supabase } from '../integrations/supabase/client'; 
+import { supabase } from '../integrations/supabase/client';
 
 export function RealtimeProvider() {
   useEffect(() => {
@@ -10,7 +10,7 @@ export function RealtimeProvider() {
       .on(
         'postgres_changes',
         {
-          event: '*',        
+          event: '*',
           schema: 'public',
         },
         (payload) => {
@@ -21,12 +21,16 @@ export function RealtimeProvider() {
       .subscribe((status, err) => {
         if (status === 'SUBSCRIBED') {
           console.log('✅ Realtime successfully connected to all tables');
-        } else if (err) {
-          console.error('❌ Realtime subscription failed:', err);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('❌ Realtime subscription failed:', err || status);
+        } else {
+          console.log('Realtime status:', status);
         }
       });
 
+    // Cleanup when component unmounts
     return () => {
+      console.log('🧹 Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, []);
