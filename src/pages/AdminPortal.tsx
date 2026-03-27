@@ -26,6 +26,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import jsPDF from "jspdf";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 
 const strands = ["ICT", "GAS", "HUMSS", "STEM", "ABM"];
 
@@ -111,16 +112,23 @@ const AdminPortal = () => {
 
   const isSHS = (grade: string) => grade === "11" || grade === "12";
 
-  useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate("/login"); return; }
-      const { data: prof } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
-      if (prof?.role !== "admin") { navigate("/login"); return; }
-      loadData();
-    };
-    init();
-  }, [navigate]);
+    useRealtimeTable("patients", loadData);
+    useRealtimeTable("appointments", loadData);
+    useRealtimeTable("finished_appointments", loadData);
+    useRealtimeTable("records", loadData);
+    useRealtimeTable("announcements", loadData);
+    useRealtimeTable("feedback", loadData);
+
+    useEffect(() => {
+      const init = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { navigate("/login"); return; }
+        const { data: prof } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+        if (prof?.role !== "admin") { navigate("/login"); return; }
+        loadData();
+      };
+      init();
+    }, [navigate]);
 
   const loadData = async () => {
     const [pRes, aRes, allRes, wRes, fRes, rRes, annRes, finRes] = await Promise.all([
