@@ -1262,65 +1262,36 @@ const AdminPortal = () => {
           <div>
             <h2 className="text-2xl font-bold text-foreground mb-6">Student Messages</h2>
             <div className="flex bg-card rounded-lg border border-border overflow-hidden" style={{ height: "500px" }}>
-              
-              {/* Conversation List */}
-              <div className="w-72 border-r border-border overflow-y-auto">
+              {/* Conversation list */}
+              <div className="w-64 border-r border-border overflow-y-auto">
                 {studentConversations.length === 0 ? (
                   <p className="p-4 text-sm text-muted-foreground">No messages yet.</p>
                 ) : (
                   studentConversations.map((conv) => (
                     <div
                       key={conv.student_id}
-                      className={`group flex items-center justify-between p-4 border-b border-border hover:bg-secondary transition-colors cursor-pointer ${selectedStudentId === conv.student_id ? "bg-secondary" : ""}`}
-                      onClick={() => setSelectedStudentId(conv.student_id)}
+                      className={`flex items-center border-b border-border hover:bg-secondary transition-colors ${selectedStudentId === conv.student_id ? "bg-secondary" : ""}`}
                     >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-card-foreground truncate">{conv.student_name}</p>
-                        <p className="text-xs text-muted-foreground">{conv.messages.length} messages</p>
-                      </div>
-
-                      {/* Delete Button */}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0 text-destructive opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-
-                          // Delete all messages for this student
-                          const { error } = await supabase
-                            .from("feedback")
-                            .delete()
-                            .eq("student_id", conv.student_id);
-
-                          if (error) {
-                            toast({
-                              title: "Error",
-                              description: error.message,
-                              variant: "destructive"
-                            });
-                          } else {
-                            toast({
-                              title: "Conversation Deleted",
-                              description: `All messages with ${conv.student_name} have been removed.`,
-                            });
-
-                            // Force clear selected conversation
-                            setSelectedStudentId(null);
-
-                            // Refresh data
-                            loadData();
-                          }
-                        }}
+                      <button
+                        onClick={() => setSelectedStudentId(conv.student_id)}
+                        className="flex-1 text-left p-4"
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                        <p className="text-sm font-semibold text-card-foreground">{conv.student_name}</p>
+                        <p className="text-xs text-muted-foreground">{conv.messages.length} messages</p>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteConversation(conv.student_id)}
+                        className="p-2 mr-2 text-muted-foreground hover:text-destructive transition-colors"
+                        title="Delete conversation"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   ))
                 )}
               </div>
 
-              {/* Chat Area */}
+              {/* Chat area */}
               <div className="flex-1 flex flex-col">
                 {selectedStudentId ? (
                   <>
@@ -1328,25 +1299,15 @@ const AdminPortal = () => {
                       {studentConversations.find(c => c.student_id === selectedStudentId)?.messages.map((msg: any) => (
                         <div key={msg.id} className={`flex ${msg.sender_role === "admin" ? "justify-end" : "justify-start"}`}>
                           <div className={`max-w-[70%] rounded-lg px-4 py-2 ${msg.sender_role === "admin" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
-                            <p className="text-xs font-semibold mb-1">
-                              {msg.sender_role === "admin" ? "Admin" : msg.student_name}
-                            </p>
+                            <p className="text-xs font-semibold mb-1">{msg.sender_role === "admin" ? "Admin" : msg.student_name}</p>
                             <p className="text-sm">{msg.message}</p>
-                            <p className="text-xs opacity-60 mt-1">
-                              {new Date(msg.created_at).toLocaleString()}
-                            </p>
+                            <p className="text-xs opacity-60 mt-1">{new Date(msg.created_at).toLocaleString()}</p>
                           </div>
                         </div>
                       ))}
                     </div>
-
                     <form onSubmit={handleAdminReply} className="border-t border-border p-4 flex gap-2">
-                      <Input 
-                        placeholder="Type a reply..." 
-                        value={adminReply} 
-                        onChange={(e) => setAdminReply(e.target.value)} 
-                        className="flex-1" 
-                      />
+                      <Input placeholder="Type a reply..." value={adminReply} onChange={(e) => setAdminReply(e.target.value)} className="flex-1" />
                       <Button type="submit">Send</Button>
                     </form>
                   </>
