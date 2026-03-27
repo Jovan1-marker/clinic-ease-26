@@ -1,5 +1,7 @@
 /**
- * Admin Portal with Realtime Updates
+ * Admin Portal
+ * Full admin dashboard with: Overview, Patient management, Appointments,
+ * Waitlist, Scheduled, Records, Announcements, Messages
  */
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -24,14 +26,12 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import jsPDF from "jspdf";
-import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 
 const strands = ["ICT", "GAS", "HUMSS", "STEM", "ABM"];
 
 const AdminPortal = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-
   const [activeSection, setActiveSection] = useState("Overview");
   const [expandedPatientId, setExpandedPatientId] = useState<string | null>(null);
   const [patients, setPatients] = useState<any[]>([]);
@@ -72,14 +72,31 @@ const AdminPortal = () => {
   const [adminReply, setAdminReply] = useState("");
   const [studentConversations, setStudentConversations] = useState<any[]>([]);
 
-  // ==================== REALTIME UPDATES ====================
-  // IMPORTANT: This must be AFTER all useState and BEFORE any other code
-  useRealtimeTable("patients", loadData);
-  useRealtimeTable("appointments", loadData);
-  useRealtimeTable("finished_appointments", loadData);
-  useRealtimeTable("records", loadData);
-  useRealtimeTable("announcements", loadData);
-  useRealtimeTable("feedback", loadData);
+  const handleDownloadRecord = (record: any) => {
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text(record.title || "Untitled Medical Record", 20, 20);
+      doc.setFontSize(11);
+      doc.setTextColor(100);
+      doc.text(`Created: ${new Date(record.created_at).toLocaleDateString()}`, 20, 30);
+      doc.setTextColor(0);
+      doc.setFontSize(12);
+      const content = record.content || "No content available.";
+      const plainText = content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      const splitText = doc.splitTextToSize(plainText, 170);
+      let y = 50;
+      splitText.forEach((line: string) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.text(line, 20, y);
+        y += 7;
+      });
+      doc.save(`${record.title || "medical-record"}.pdf`);
+      toast({ title: "Download started" });
+    } catch (err) {
+      toast({ title: "Download failed", variant: "destructive" });
+    }
+  };
 
   const sidebarLinks = [
     { label: "Overview", icon: LayoutDashboard, onClick: () => setActiveSection("Overview") },
@@ -116,13 +133,13 @@ const AdminPortal = () => {
       supabase.from("announcements").select("*").order("created_at", { ascending: false }),
       supabase.from("finished_appointments").select("*").order("finished_at", { ascending: false }),
     ]);
-
     if (pRes.data) setPatients(pRes.data);
     if (aRes.data) setAppointments(aRes.data);
     if (allRes.data) setAllAppointments(allRes.data);
     if (wRes.data) setWaitlist(wRes.data);
     if (fRes.data) {
       setFeedback(fRes.data);
+      /* Group conversations by student_id */
       const grouped: Record<string, any[]> = {};
       fRes.data.forEach((f: any) => {
         if (!grouped[f.student_id]) grouped[f.student_id] = [];
@@ -144,33 +161,8 @@ const AdminPortal = () => {
     if (annRes.data) setAnnouncements(annRes.data);
     if (finRes.data) setFinishedAppointments(finRes.data);
   };
-  
-  const handleDownloadRecord = (record: any) => {
-    try {
-      const doc = new jsPDF();
-      doc.setFontSize(18);
-      doc.text(record.title || "Untitled Medical Record", 20, 20);
-      doc.setFontSize(11);
-      doc.setTextColor(100);
-      doc.text(`Created: ${new Date(record.created_at).toLocaleDateString()}`, 20, 30);
-      doc.setTextColor(0);
-      doc.setFontSize(12);
-      const content = record.content || "No content available.";
-      const plainText = content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-      const splitText = doc.splitTextToSize(plainText, 170);
-      let y = 50;
-      splitText.forEach((line: string) => {
-        if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(line, 20, y);
-        y += 7;
-      });
-      doc.save(`${record.title || "medical-record"}.pdf`);
-      toast({ title: "Download started" });
-    } catch (err) {
-      toast({ title: "Download failed", variant: "destructive" });
-    }
-  };
 
+  /* Helper to extract grade number from stored grade string like "11 ICT - THALES" or "7 - Section" */
   const extractGradeNum = (gradeStr: string) => {
     const match = gradeStr?.match(/^(\d+)/);
     return match ? match[1] : "";
@@ -259,11 +251,12 @@ const AdminPortal = () => {
     overweight: patients.filter(p => p.bmi_status?.toLowerCase() === "overweight").length,
     underweight: patients.filter(p => p.bmi_status?.toLowerCase() === "underweight").length,
   };
-
+  
   const calculateBMI = (heightCm: string, weightKg: string): string => {
     const h = parseFloat(heightCm);
     const w = parseFloat(weightKg);
     if (!h || !w || h === 0) return "";
+
     const bmi = w / ((h / 100) ** 2);
     if (bmi < 18.5) return "Underweight";
     if (bmi < 25) return "Normal";
@@ -290,10 +283,12 @@ const AdminPortal = () => {
     }
   };
 
+  /* Send SMS helper (fire-and-forget) */
   const sendSms = (to: string, message: string) => {
     supabase.functions.invoke("send-sms", { body: { to, message } }).catch(console.error);
   };
 
+  /* Look up student contact number from profiles */
   const getStudentContact = async (studentId: string) => {
     const { data } = await supabase.from("profiles").select("contact_no").eq("id", studentId).maybeSingle();
     return data?.contact_no || null;
@@ -316,12 +311,14 @@ const AdminPortal = () => {
     if (!approvingId || !selectedDate) return;
     const { count } = await supabase.from("appointments").select("*", { count: "exact", head: true }).eq("status", "approved");
     const status = (count || 0) >= 5 ? "waitlisted" : "approved";
+    /* Get the appointment to find student_id */
     const appt = allAppointments.find(a => a.id === approvingId);
     const { error } = await supabase.from("appointments").update({
       status, scheduled_date: selectedDate.toISOString(), scheduled_time: selectedTime,
     }).eq("id", approvingId);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); }
     else {
+      /* Send SMS notification */
       if (appt?.student_id) {
         const contact = await getStudentContact(appt.student_id);
         if (contact) {
@@ -352,6 +349,8 @@ const AdminPortal = () => {
   const handleMarkDone = async (appointmentId: string) => {
     const appt = allAppointments.find(a => a.id === appointmentId);
     if (!appt) return;
+
+    /* Move to finished_appointments */
     await supabase.from("finished_appointments").insert({
       original_id: appt.id, student_id: appt.student_id, student_name: appt.student_name,
       lrn: appt.lrn, grade: appt.grade, service_type: appt.service_type,
@@ -360,6 +359,7 @@ const AdminPortal = () => {
     });
     await supabase.from("appointments").delete().eq("id", appointmentId);
 
+    /* Promote first waitlisted appointment and notify via SMS */
     const { data: nextWaitlisted } = await supabase.from("appointments")
       .select("*").eq("status", "waitlisted").order("created_at").limit(1);
     if (nextWaitlisted && nextWaitlisted.length > 0) {
@@ -374,6 +374,7 @@ const AdminPortal = () => {
         }
       }
     }
+
     toast({ title: "Marked as Done" }); loadData();
   };
 
@@ -401,6 +402,7 @@ const AdminPortal = () => {
     editorRef.current?.focus();
   };
 
+  /* Delete entire conversation with a student */
   const handleDeleteConversation = async (studentId: string) => {
     const { error } = await supabase.from("feedback").delete().eq("student_id", studentId);
     if (error) {
@@ -412,9 +414,12 @@ const AdminPortal = () => {
     loadData();
   };
 
+  /* Admin reply to student message — saves in-app AND sends SMS */
   const handleAdminReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudentId || !adminReply.trim()) return;
+
+    /* 1. Save in-app message */
     const { error } = await supabase.from("feedback").insert({
       student_id: selectedStudentId,
       student_name: "Admin",
@@ -425,19 +430,23 @@ const AdminPortal = () => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
+
+    /* 2. Send SMS copy to the student */
     try {
       const contact = await getStudentContact(selectedStudentId);
       if (contact) {
         await sendSms(contact, `[School Clinic] Message from Admin: ${adminReply}`);
       }
     } catch (smsErr) {
-      console.error("SMS send failed:", smsErr);
+      console.error("SMS send failed (message still saved in-app):", smsErr);
     }
+
     setAdminReply("");
     loadData();
     toast({ title: "Sent", description: "Message sent in-app and via SMS." });
   };
 
+  /* Overview stats */
   const overviewStats = {
     totalPatients: patients.length,
     pendingAppts: appointments.length,
