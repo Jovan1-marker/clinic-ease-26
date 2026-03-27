@@ -67,13 +67,13 @@ const AdminPortal = () => {
   const [recordTitle, setRecordTitle] = useState("");
   const editorRef = useRef<HTMLDivElement>(null);
 
-/* Message state */
+  /* Message state */
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [adminReply, setAdminReply] = useState("");
   const [studentConversations, setStudentConversations] = useState<any[]>([]);
 
   // ==================== REALTIME UPDATES ====================
-  // This must be here — after ALL useState, before any other code
+  // IMPORTANT: This must be AFTER all useState and BEFORE any other code
   useRealtimeTable("patients", loadData);
   useRealtimeTable("appointments", loadData);
   useRealtimeTable("finished_appointments", loadData);
@@ -144,6 +144,7 @@ const AdminPortal = () => {
     if (annRes.data) setAnnouncements(annRes.data);
     if (finRes.data) setFinishedAppointments(finRes.data);
   };
+  
   const handleDownloadRecord = (record: any) => {
     try {
       const doc = new jsPDF();
