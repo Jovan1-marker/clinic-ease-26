@@ -6,6 +6,6 @@ import { RealtimeProvider } from "./hooks/useRealtime";
 createRoot(document.getElementById("root")!).render(
   <>
     <App />
-    <RealtimeProvider />
+    <RealtimeProvider />     {/* ← This activates realtime for the whole app */}
   </>
 );
