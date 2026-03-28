@@ -63,7 +63,7 @@ const Index = () => {
           <div className="flex items-center gap-3">
             <img src={logo} alt="AAIS Logo" className="w-10 h-10 rounded-full" />
             <h1 className="text-xl font-bold text-primary-foreground">
-              MIMS <span className="text-accent font-normal text-sm">School Clinic</span>
+              Army's Angel Integrated School, Inc <span className="text-accent font-normal text-sm">Clinic</span>
             </h1>
           </div>
 
