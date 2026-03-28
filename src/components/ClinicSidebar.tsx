@@ -63,6 +63,11 @@ const ClinicSidebar = ({ links, title, activeLink }: ClinicSidebarProps) => {
             >
               <Icon className="w-5 h-5" />
               {link.label}
+              {link.badge && link.badge > 0 && (
+                <span className="ml-auto bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {link.badge > 9 ? "9+" : link.badge}
+                </span>
+              )}
             </button>
           );
         })}
