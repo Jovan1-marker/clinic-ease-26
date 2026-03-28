@@ -80,6 +80,8 @@ const StudentPortal = () => {
   /* Message state */
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const lastSeenCountRef = useRef(0);
 
   /* Data state */
   const [appointments, setAppointments] = useState<any[]>([]);
