@@ -134,6 +134,51 @@ const StudentPortal = () => {
       if (msgs) setMessages(msgs);
     };
     checkAuth();
+
+    /* Realtime subscriptions */
+    const appointmentsChannel = supabase
+      .channel('student-appointments-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, async () => {
+        const { data: { user: u } } = await supabase.auth.getUser();
+        if (!u) return;
+        const { data } = await supabase.from("appointments").select("*").eq("student_id", u.id).order("created_at", { ascending: false });
+        if (data) setAppointments(data);
+      })
+      .subscribe();
+
+    const feedbackChannel = supabase
+      .channel('student-feedback-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'feedback' }, async () => {
+        const { data: { user: u } } = await supabase.auth.getUser();
+        if (!u) return;
+        const { data: msgs } = await supabase.from("feedback").select("*").eq("student_id", u.id).order("created_at", { ascending: true });
+        if (msgs) setMessages(msgs);
+      })
+      .subscribe();
+
+    const profileChannel = supabase
+      .channel('student-profile-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async () => {
+        const { data: { user: u } } = await supabase.auth.getUser();
+        if (!u) return;
+        const { data: prof } = await supabase.from("profiles").select("*").eq("id", u.id).maybeSingle();
+        if (prof) {
+          setProfile(prof);
+          setSettingsName(prof.full_name || "");
+          setSettingsAddress(prof.home_address || "");
+          setSettingsContact(prof.contact_no || "");
+          setAppointmentName(prof.full_name || "");
+          setAppointmentLrn(prof.lrn || "");
+          setAppointmentGrade(prof.grade || "");
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(appointmentsChannel);
+      supabase.removeChannel(feedbackChannel);
+      supabase.removeChannel(profileChannel);
+    };
   }, [navigate]);
 
   /* Submit appointment request */
