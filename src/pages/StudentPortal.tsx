@@ -29,6 +29,17 @@ const AnnouncementsSection = () => {
     supabase.from("announcements").select("*").order("created_at", { ascending: false }).then(({ data }) => {
       if (data) setAnnouncements(data);
     });
+
+    const channel = supabase
+      .channel('student-announcements')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
+        supabase.from("announcements").select("*").order("created_at", { ascending: false }).then(({ data }) => {
+          if (data) setAnnouncements(data);
+        });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
   return (
     <div>
