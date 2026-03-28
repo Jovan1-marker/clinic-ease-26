@@ -97,7 +97,7 @@ const StudentPortal = () => {
     { label: "My Appointments", icon: CalendarCheck, onClick: () => setActiveSection("My Appointments") },
     { label: "Request Appointment", icon: CalendarPlus, onClick: () => setActiveSection("Request Appointment") },
     { label: "Announcements", icon: Megaphone, onClick: () => setActiveSection("Announcements") },
-    { label: "Messages", icon: MessageSquare, onClick: () => setActiveSection("Messages") },
+    { label: "Messages", icon: MessageSquare, onClick: () => { setActiveSection("Messages"); setUnreadMessages(0); lastSeenCountRef.current = messages.filter(m => m.sender_role === "admin").length; }, badge: unreadMessages },
     { label: "Settings", icon: Settings, onClick: () => setActiveSection("Settings") },
   ];
 
