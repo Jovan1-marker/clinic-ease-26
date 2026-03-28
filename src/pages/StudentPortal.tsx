@@ -18,8 +18,7 @@ import {
 
 /* Available clinic services */
 const clinicServices = [
-  "General Checkup", "Dental", "Eye Check", "First Aid",
-  "Vaccination", "Health Counseling", "BMI Monitoring", "Medical Certificate",
+  "General Checkup", "Dental", "Health Counseling", "BMI Monitoring", "Medical Certificate", "Mental Health",
 ];
 
 /* Announcements sub-component */
