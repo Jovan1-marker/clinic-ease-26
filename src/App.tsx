@@ -28,8 +28,8 @@ const App = () => (
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} /> 
-          <Route path="/studentportal" element={<StudentPortal />} />
-          <Route path="/adminportal" element={<AdminPortal />} />    
+          <Route path="/student" element={<StudentPortal />} />
+          <Route path="/admin" element={<AdminPortal />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
