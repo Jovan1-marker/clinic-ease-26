@@ -154,7 +154,11 @@ const StudentPortal = () => {
         const { data: { user: u } } = await supabase.auth.getUser();
         if (!u) return;
         const { data: msgs } = await supabase.from("feedback").select("*").eq("student_id", u.id).order("created_at", { ascending: true });
-        if (msgs) setMessages(msgs);
+        if (msgs) {
+          setMessages(msgs);
+          const adminCount = msgs.filter(m => m.sender_role === "admin").length;
+          setUnreadMessages((prev) => adminCount - lastSeenCountRef.current);
+        }
       })
       .subscribe();
 
