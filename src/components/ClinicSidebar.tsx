@@ -13,6 +13,7 @@ interface SidebarLink {
   label: string;
   icon: LucideIcon;
   onClick: () => void;
+  badge?: number;
 }
 
 interface ClinicSidebarProps {
