@@ -120,6 +120,21 @@ const AdminPortal = () => {
       loadData();
     };
     init();
+
+    /* Realtime subscriptions for all admin tables */
+    const tables = ["patients", "appointments", "feedback", "records", "announcements", "finished_appointments", "profiles"];
+    const channels = tables.map((table) =>
+      supabase
+        .channel(`admin-${table}-rt`)
+        .on('postgres_changes', { event: '*', schema: 'public', table }, () => {
+          loadData();
+        })
+        .subscribe()
+    );
+
+    return () => {
+      channels.forEach((ch) => supabase.removeChannel(ch));
+    };
   }, [navigate]);
 
   const loadData = async () => {
