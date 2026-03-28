@@ -98,6 +98,8 @@ const AdminPortal = () => {
     }
   };
 
+  const unreadStudentMessages = feedback.filter(f => f.sender_role === "student").length;
+
   const sidebarLinks = [
     { label: "Overview", icon: LayoutDashboard, onClick: () => setActiveSection("Overview") },
     { label: "Patient", icon: Users, onClick: () => setActiveSection("Patient") },
@@ -106,7 +108,7 @@ const AdminPortal = () => {
     { label: "Scheduled", icon: CalendarDays, onClick: () => setActiveSection("Scheduled") },
     { label: "Record", icon: FolderOpen, onClick: () => setActiveSection("Record") },
     { label: "Announcements", icon: Megaphone, onClick: () => setActiveSection("Announcements") },
-    { label: "Messages", icon: MessageSquare, onClick: () => setActiveSection("Messages") },
+    { label: "Messages", icon: MessageSquare, onClick: () => setActiveSection("Messages"), badge: unreadStudentMessages },
   ];
 
   const isSHS = (grade: string) => grade === "11" || grade === "12";

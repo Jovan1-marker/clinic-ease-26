@@ -133,7 +133,10 @@ const StudentPortal = () => {
         .select("*")
         .eq("student_id", user.id)
         .order("created_at", { ascending: true });
-      if (msgs) setMessages(msgs);
+      if (msgs) {
+        setMessages(msgs);
+        lastSeenCountRef.current = msgs.filter((m: any) => m.sender_role === "admin").length;
+      }
     };
     checkAuth();
 
